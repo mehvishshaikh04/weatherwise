@@ -1,0 +1,291 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WeatherAPI.com Weather App</title>
+    
+    <script src="https://cdn.tailwindcss.com"></script>
+  
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background: linear-gradient(to right, #6a11cb 0%, #2575fc 100%); 
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+            padding: 20px; 
+            box-sizing: border-box; 
+        }
+        .container {
+            background-color: rgba(255, 255, 255, 0.95);
+            border-radius: 20px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+            padding: 30px;
+            max-width: 500px;
+            width: 100%;
+            text-align: center;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+        .input-group {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+        .input-group input {
+            flex-grow: 1;
+            min-width: 180px; 
+            padding: 12px 15px;
+            border: 2px solid #a78bfa; 
+            border-radius: 10px;
+            font-size: 1rem;
+            outline: none;
+            transition: all 0.3s ease;
+        }
+        .input-group input:focus {
+            border-color: #8b5cf6; 
+            box-shadow: 0 0 0 3px rgba(139, 92, 246, 0.3);
+        }
+        .input-group button {
+            background: linear-gradient(to right, #8b5cf6, #ec4899); 
+            color: white;
+            padding: 12px 25px;
+            border-radius: 10px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            border: none;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.15);
+            transition: all 0.3s ease;
+            white-space: nowrap; 
+        }
+        .input-group button:hover {
+            opacity: 0.9;
+            transform: translateY(-2px);
+            box-shadow: 0 7px 20px rgba(0, 0, 0, 0.2);
+        }
+        .weather-info {
+            margin-top: 20px;
+            padding: 20px;
+            background-color: #f3f4f6; 
+            border-radius: 15px;
+            box-shadow: inset 0 2px 5px rgba(0, 0, 0, 0.05);
+            min-height: 120px; 
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+        }
+        .weather-info h2 {
+            font-size: 2.2rem;
+            color: #333;
+            margin-bottom: 10px;
+            font-weight: 700;
+        }
+        .weather-info p {
+            font-size: 1.2rem;
+            color: #555;
+            margin-bottom: 5px;
+        }
+        .weather-info .temperature {
+            font-size: 3.5rem;
+            font-weight: 800;
+            color: #ef4444; 
+            margin-top: 10px;
+            margin-bottom: 0;
+        }
+        .loading-spinner {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #3498db;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 20px auto;
+            display: none;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        .error-message {
+            color: #dc2626;
+            font-weight: 600;
+            margin-top: 10px;
+        }
+        .logo {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 20px;
+            color: #8b5cf6; 
+        }
+        .logo svg {
+            width: 40px;
+            height: 40px;
+            margin-right: 10px;
+            fill: #8b5cf6; 
+        /
+        @media (max-width: 600px) {
+            .container {
+                padding: 20px;
+                margin: 10px;
+            }
+            .input-group {
+                flex-direction: column;
+            }
+            .input-group input,
+            .input-group button {
+                width: 100%;
+                min-width: unset;
+            }
+            .weather-info h2 {
+                font-size: 1.8rem;
+            }
+            .weather-info p {
+                font-size: 1rem;
+            }
+            .weather-info .temperature {
+                font-size: 2.8rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        
+        <div class="logo">
+           
+            <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                <path d="M18.5 13H17c0-2.76-2.24-5-5-5S7 10.24 7 13H5.5C3.57 13 2 14.57 2 16.5S3.57 20 5.5 20h13c1.93 0 3.5-1.57 3.5-3.5S20.43 13 18.5 13zM12 10c1.66 0 3 1.34 3 3H9c0-1.66 1.34-3 3-3z"/>
+            </svg>
+            <h1 class="text-3xl font-bold text-gray-800">Weatherfetch</h1>
+        </div>
+
+       
+        <div class="input-group">
+            <input type="text" id="cityInput" placeholder="Enter city name (e.g., London)" class="shadow-sm">
+            <button id="getWeatherBtn" class="shadow-md">Get Weather</button>
+        </div>
+
+        <!-- Loading Spinner -->
+        <div id="loadingSpinner" class="loading-spinner"></div>
+
+        <!-- Weather Information Display Section -->
+        <div id="weatherInfo" class="weather-info">
+            <p class="text-gray-600">Enter a city name above to get the current weather.</p>
+        </div>
+
+        <!-- Error Message Display -->
+        <p id="errorMessage" class="error-message hidden"></p>
+    </div>
+
+    <script>
+        // Get references to HTML elements
+        const cityInput = document.getElementById('cityInput');
+        const getWeatherBtn = document.getElementById('getWeatherBtn');
+        const weatherInfoDiv = document.getElementById('weatherInfo');
+        const loadingSpinner = document.getElementById('loadingSpinner');
+        const errorMessageDiv = document.getElementById('errorMessage');
+
+        // API Key provided by the user in the prompt
+        const API_KEY = '1e0b3978016240d3882115645252407';
+        const BASE_URL = 'http://api.weatherapi.com/v1/current.json';
+
+        /**
+         * Displays a message in the weather info section.
+         * @param {string} message - The message to display.
+         * @param {string} type - 'info' or 'error'.
+         */
+        function displayMessage(message, type = 'info') {
+            weatherInfoDiv.innerHTML = `<p class="text-gray-600">${message}</p>`;
+            errorMessageDiv.classList.add('hidden'); // Hide error message if displaying info
+            if (type === 'error') {
+                errorMessageDiv.textContent = message;
+                errorMessageDiv.classList.remove('hidden');
+                weatherInfoDiv.innerHTML = ''; // Clear weather info if error
+            }
+        }
+
+        /**
+         * Fetches weather data from the API and updates the UI.
+         */
+        async function fetchWeatherData() {
+            const city = cityInput.value.trim(); // Get city name and remove leading/trailing whitespace
+
+            // Input validation
+            if (!city) {
+                displayMessage('Please enter a city name.', 'error');
+                return;
+            }
+
+            // Show loading spinner and hide previous messages
+            loadingSpinner.style.display = 'block';
+            weatherInfoDiv.innerHTML = ''; // Clear previous weather info
+            errorMessageDiv.classList.add('hidden'); // Hide any previous error messages
+
+            try {
+                // Construct the API URL using the provided key and city
+                const url = `${BASE_URL}?key=${API_KEY}&q=${city}&aqi=no`; // aqi=no as per example
+
+                // Make the API call
+                const response = await fetch(url);
+
+                // Check if the response was successful
+                if (!response.ok) {
+                    // If response is not OK, parse the error message from the API
+                    const errorData = await response.json();
+                    const errorMsg = errorData.error ? errorData.error.message : 'An unknown error occurred.';
+                    throw new Error(errorMsg);
+                }
+
+                // Parse the JSON response
+                const data = await response.json();
+
+                // Extract relevant data
+                const locationName = data.location.name;
+                const country = data.location.country;
+                const temperatureC = data.current.temp_c;
+                const temperatureF = data.current.temp_f;
+                const conditionText = data.current.condition.text;
+                const conditionIcon = data.current.condition.icon; // URL to weather icon
+
+                // Update the weather info section with fetched data
+                weatherInfoDiv.innerHTML = `
+                    <h2 class="text-gray-800">${locationName}, ${country}</h2>
+                    <p class="text-gray-700">${conditionText}</p>
+                    <img src="${conditionIcon}" alt="${conditionText}" class="w-16 h-16 mx-auto">
+                    <p class="temperature">${temperatureC}°C / ${temperatureF}°F</p>
+                `;
+            } catch (error) {
+                // Handle any errors during the fetch operation
+                console.error('Error fetching weather data:', error);
+                displayMessage(`Could not get weather for "${city}". ${error.message}`, 'error');
+            } finally {
+                // Hide loading spinner regardless of success or failure
+                loadingSpinner.style.display = 'none';
+            }
+        }
+
+      
+        getWeatherBtn.addEventListener('click', fetchWeatherData);
+
+        cityInput.addEventListener('keydown', (event) => {
+            if (event.key === 'Enter') {
+                fetchWeatherData();
+            }
+        });
+
+     
+        displayMessage('Enter a city name above to get the current weather.');
+    </script>
+</body>
+</html>
+
+
